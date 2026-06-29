@@ -33,7 +33,39 @@
     padding: 0;
     box-sizing: border-box;
     scroll-behavior: smooth;
+    cursor: none !important;
 }
+
+/* ==========================================================================
+   SPACESHIP CURSOR
+   ========================================================================== */
+#spaceship-cursor {
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 99999;
+    transform: translate(-50%, -50%);
+    filter: drop-shadow(0 0 5px #00f5ff) drop-shadow(0 0 12px rgba(0, 245, 255, 0.4));
+    transition: filter 0.1s ease;
+    will-change: transform, left, top;
+}
+
+#spaceship-cursor.firing {
+    filter: drop-shadow(0 0 14px #00f5ff) drop-shadow(0 0 28px rgba(0, 245, 255, 0.7)) brightness(1.8);
+}
+
+.ship-exhaust {
+    animation: exhaustPulse 0.45s ease-in-out infinite alternate;
+    transform-origin: 19px 44px;
+}
+
+@keyframes exhaustPulse {
+    from { opacity: 0.3; transform: scaleX(0.8); }
+    to   { opacity: 0.9; transform: scaleX(1.2); }
+}
+
+
 
 body {
     background-color: var(--bg-space);

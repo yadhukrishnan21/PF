@@ -143,54 +143,139 @@ window.addEventListener('scroll', () => {
 });
 
 /* ==========================================================================
-   CURSOR TRAIL INTERACTION SYSTEM
+   SPACESHIP CURSOR SYSTEM
    ========================================================================== */
 const cursorTrailContainer = document.getElementById('cursor-trail-container');
-let mouse = { x: 0, y: 0 };
-let isMoving = false;
+const spaceshipEl = document.getElementById('spaceship-cursor');
 
+let mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+let lastMouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+let spaceshipAngle = 0;
+let targetAngle = 0;
+let velX = 0, velY = 0;
+
+// Move ship + compute rotation target from velocity
 window.addEventListener('mousemove', (e) => {
+    lastMouse.x = mouse.x;
+    lastMouse.y = mouse.y;
     mouse.x = e.clientX;
     mouse.y = e.clientY;
-    isMoving = true;
-    
-    if (Math.random() < 0.25) {
+
+    velX = mouse.x - lastMouse.x;
+    velY = mouse.y - lastMouse.y;
+    const speed = Math.sqrt(velX * velX + velY * velY);
+
+    // Only update heading if actually moving (avoids snap at rest)
+    if (speed > 1.5) {
+        // atan2 gives angle from +X axis; ship SVG points up so +90deg offset
+        targetAngle = Math.atan2(velY, velX) * (180 / Math.PI) + 90;
+    }
+
+    // Reposition the spaceship element
+    spaceshipEl.style.left = `${mouse.x}px`;
+    spaceshipEl.style.top  = `${mouse.y}px`;
+
+    // Engine exhaust trail — particles spawned behind the ship
+    if (speed > 2 && Math.random() < 0.55) {
+        createExhaustParticle(
+            mouse.x - velX * 2.2,
+            mouse.y - velY * 2.2
+        );
+    }
+
+    // Ambient glow orbs
+    if (Math.random() < 0.10) {
         createCursorParticle(mouse.x, mouse.y);
     }
+});
+
+// Smooth rotation using lerp each frame
+function animateSpaceship() {
+    // Shortest-path angle difference (keeps rotation tight)
+    let diff = targetAngle - spaceshipAngle;
+    while (diff >  180) diff -= 360;
+    while (diff < -180) diff += 360;
+
+    spaceshipAngle += diff * 0.13;
+
+    if (spaceshipEl) {
+        spaceshipEl.style.transform = `translate(-50%, -50%) rotate(${spaceshipAngle}deg)`;
+    }
+    requestAnimationFrame(animateSpaceship);
+}
+animateSpaceship();
+
+// Click — firing burst effect
+document.addEventListener('mousedown', () => {
+    if (!spaceshipEl) return;
+    spaceshipEl.classList.add('firing');
+    for (let i = 0; i < 10; i++) createCursorParticle(mouse.x, mouse.y);
+});
+document.addEventListener('mouseup', () => {
+    if (spaceshipEl) spaceshipEl.classList.remove('firing');
 });
 
 function createCursorParticle(x, y) {
     const particle = document.createElement('div');
     particle.className = 'cursor-trail-particle';
-    
-    // Set style parameters dynamically
-    const size = Math.random() * 6 + 2;
+
+    const size  = Math.random() * 5 + 2;
     const isCyan = Math.random() > 0.5;
-    
-    particle.style.position = 'fixed';
-    particle.style.left = `${x}px`;
-    particle.style.top = `${y}px`;
-    particle.style.width = `${size}px`;
-    particle.style.height = `${size}px`;
-    particle.style.borderRadius = '50%';
-    particle.style.pointerEvents = 'none';
-    particle.style.zIndex = '9998';
-    particle.style.backgroundColor = isCyan ? 'var(--accent-cyan)' : 'var(--accent-violet)';
-    particle.style.boxShadow = isCyan ? 'var(--glow-cyan)' : 'var(--glow-violet)';
-    
+
+    particle.style.cssText = `
+        position: fixed;
+        left: ${x}px;
+        top: ${y}px;
+        width: ${size}px;
+        height: ${size}px;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 9998;
+        background-color: ${isCyan ? 'var(--accent-cyan)' : 'var(--accent-violet)'};
+        box-shadow: ${isCyan ? 'var(--glow-cyan)' : 'var(--glow-violet)'};
+    `;
+
     cursorTrailContainer.appendChild(particle);
-    
-    // Animate out
+
     gsap.to(particle, {
-        x: (Math.random() - 0.5) * 30,
-        y: (Math.random() - 0.5) * 30,
+        x: (Math.random() - 0.5) * 32,
+        y: (Math.random() - 0.5) * 32,
         opacity: 0,
         scale: 0.1,
         duration: 0.8,
-        ease: "power2.out",
-        onComplete: () => {
-            particle.remove();
-        }
+        ease: 'power2.out',
+        onComplete: () => particle.remove()
+    });
+}
+
+function createExhaustParticle(x, y) {
+    const particle = document.createElement('div');
+    const size = Math.random() * 6 + 3;
+    const isHot = Math.random() > 0.4; // cyan-hot vs orange-hot
+
+    particle.style.cssText = `
+        position: fixed;
+        left: ${x}px;
+        top: ${y}px;
+        width: ${size}px;
+        height: ${size}px;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 9997;
+        background-color: ${isHot ? 'var(--accent-cyan)' : '#ff7700'};
+        box-shadow: 0 0 8px ${isHot ? 'var(--accent-cyan)' : '#ff7700'};
+    `;
+
+    document.body.appendChild(particle);
+
+    gsap.to(particle, {
+        x: (Math.random() - 0.5) * 16,
+        y: (Math.random() - 0.5) * 16,
+        opacity: 0,
+        scale: 0,
+        duration: 0.45,
+        ease: 'power3.out',
+        onComplete: () => particle.remove()
     });
 }
 
