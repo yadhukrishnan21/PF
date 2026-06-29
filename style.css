@@ -1487,6 +1487,20 @@ a {
     text-shadow: var(--glow-gold);
 }
 
+/* NXT Wave card — cyan seal variant */
+.cert-seal--cyan {
+    color: var(--accent-cyan);
+    text-shadow: var(--glow-cyan);
+}
+
+/* NXT Wave card — violet icon-box variant */
+.cert-icon-box--cyan {
+    background: rgba(139, 0, 255, 0.08);
+    border-color: var(--accent-violet);
+    color: var(--accent-violet);
+    box-shadow: var(--glow-violet);
+}
+
 .cert-action-hint {
     font-size: 0.6rem;
     color: var(--text-gray);
